@@ -1,1 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Build Agent Pro – AI Agent Builder Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#03050d;color:#e8eaf2;font-family:'Sora',sans-serif;overflow:hidden}
+:root{--indigo:#6366f1;--purple:#a855f7;--gold:#f5c842;--green:#34d399;--red:#f87171}
+@keyframes orb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.05)}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.shimmer-text{background:linear-gradient(90deg,#818cf8,#c084fc,#818cf8);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
+.nav-item{transition:all 0.2s;cursor:pointer}
+.nav-item:hover{background:rgba(99,102,241,0.08);color:#a5b4fc}
+.nav-item.active{background:rgba(99,102,241,0.12);color:#818cf8;border-left:2px solid #6366f1!important}
+.card{background:rgba(10,16,32,0.85);backdrop-filter:blur(20px);border:1px solid rgba(99,102,241,0.1);border-radius:14px;padding:22px;animation:fadeIn 0.3s ease}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#a855f7);border:none;color:#fff;border-radius:10px;padding:12px 24px;font-family:'Sora',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all 0.2s}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-secondary{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);color:#818cf8;border-radius:10px;padding:10px 20px;font-family:'Sora',sans-serif;font-weight:600;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all 0.2s}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.5px}
+textarea,input{background:rgba(3,5,13,0.8);border:1px solid rgba(99,102,241,0.15);border-radius:10px;color:#e8eaf2;font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s}
+textarea:focus,input:focus{border-color:rgba(99,102,241,0.4)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
 
+const NAV=[
+  {id:"overview",icon:"⬡",label:"Overview"},
+  {id:"generator",icon:"⚡",label:"Build Agent"},
+  {id:"agents",icon:"◈",label:"My Agents"},
+  {id:"templates",icon:"📋",label:"Templates"},
+  {id:"marketplace",icon:"🛒",label:"Marketplace"},
+  {id:"analytics",icon:"📊",label:"Analytics"},
+  {id:"team",icon:"👥",label:"Team"},
+  {id:"billing",icon:"◎",label:"Billing"},
+  {id:"settings",icon:"⚙",label:"Settings"},
+];
+
+const MOCK_AGENTS=[
+  {id:1,agentName:"SupportBot Pro",avatar:"🎧",tagline:"24/7 customer support specialist",tone:"friendly",uses:47},
+  {id:2,agentName:"CodeReviewer X",avatar:"🔍",tagline:"Senior code review & debugging assistant",tone:"technical",uses:23},
+  {id:3,agentName:"ContentCraft AI",avatar:"✍️",tagline:"Social media & blog content creator",tone:"casual",uses:89},
+];
+
+const TEMPLATES=[
+  {id:"t1",name:"HR Bot",avatar:"👥",category:"HR",description:"Screen resumes, schedule interviews, answer policy questions",color:"#818cf8"},
+  {id:"t2",name:"Sales Bot",avatar:"💼",category:"Sales",description:"Lead qualification, follow-ups, CRM updates",color:"#34d399"},
+  {id:"t3",name:"Legal Assistant",avatar:"⚖️",category:"Legal",description:"Contract review, clause analysis, legal document drafting",color:"#fbbf24"},
+  {id:"t4",name:"SEO Writer",avatar:"🔮",category:"Content",description:"Keyword research, SEO-optimized articles",color:"#c084fc"},
+  {id:"t5",name:"Customer Support",avatar:"🎧",category:"Support",description:"24/7 ticket handling, FAQ responses",color:"#60a5fa"},
+  {id:"t6",name:"Finance Advisor",avatar:"💹",category:"Finance",description:"Budget analysis, expense tracking, financial reports",color:"#f472b6"},
+];
+
+const MARKETPLACE=[
+  {id:101,agentName:"SupportBot Pro",avatar:"🎧",tagline:"24/7 customer support specialist",category:"Support",price:9,rating:4.8,reviews:312,featured:true},
+  {id:102,agentName:"SEO Wizard",avatar:"🔮",tagline:"Boost rankings with AI-driven SEO strategy",category:"Marketing",price:14,rating:4.9,reviews:189,featured:true},
+  {id:103,agentName:"CodeReviewer X",avatar:"🔍",tagline:"Senior-level code review & debugging",category:"Dev",price:19,rating:4.7,reviews:97},
+  {id:104,agentName:"ContentCraft AI",avatar:"✍️",tagline:"Social media & blog content at scale",category:"Content",price:12,rating:4.6,reviews:445,featured:true},
+  {id:105,agentName:"Legal Eagle",avatar:"⚖️",tagline:"Contract review & legal document assistant",category:"Legal",price:29,rating:4.9,reviews:44},
+  {id:106,agentName:"Finance Advisor",avatar:"💹",tagline:"Budget tracking & financial insights",category:"Finance",price:17,rating:4.8,reviews:128},
+];
+
+const PLANS=[
+  {name:"Free",price:0,color:"#94a3b8",features:["3 agents/month","Basic templates","JSON export","Email support"]},
+  {name:"Pro",price:19,color:"#818cf8",features:["Unlimited agents","All templates","JSON + API export","Priority support","Advanced AI model"],popular:true},
+  {name:"Business",price:49,color:"#c084fc",features:["Everything in Pro","5 team seats","Custom branding","Dedicated support","API access","Analytics dashboard"]},
+];
+
+const SYSTEM_PROMPT=`You are an expert AI Agent Builder. When a user describes what kind of agent they want, generate a complete, ready-to-use AI Agent specification in JSON format.
+Return ONLY valid JSON (no markdown, no backticks) with this exact structure:
+{"agentName":"Name","tagline":"One-line description","role":"What this agent does","personality":"How the agent behaves","systemPrompt":"Full system prompt 150-200 words","capabilities":["cap1","cap2","cap3","cap4","cap5"],"tools":["tool1","tool2","tool3"],"exampleTasks":["task1","task2","task3"],"bestFor":"Who should use this","tone":"professional","avatar":"emoji"}`;
+
+function App(){
+  const [nav,setNav]=useState("overview");
+  const [prompt,setPrompt]=useState("");
+  const [agent,setAgent]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [saved,setSaved]=useState(MOCK_AGENTS);
+  const [sidebar,setSidebar]=useState(true);
+  const [mktSearch,setMktSearch]=useState("");
+  const [mktCat,setMktCat]=useState("All");
+  const [selectedPlan,setSelectedPlan]=useState("Pro");
+
+  async function buildAgent(){
+    if(!prompt.trim())return;
+    setLoading(true);setAgent(null);
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:SYSTEM_PROMPT+"\n\nUser request: "+prompt}]})
+      });
+      const d=await r.json();
+      const text=d.content?.map(x=>x.text||"").join("");
+      const clean=text.replace(/```json|```/g,"").trim();
+      setAgent(JSON.parse(clean));
+    }catch(e){setAgent({agentName:"Demo Agent",avatar:"🤖",tagline:"AI-powered assistant",role:"Helps with various tasks",personality:"Professional and helpful",systemPrompt:"You are a helpful AI assistant.",capabilities:["Task automation","Data analysis","Content creation","Customer support","Report generation"],tools:["Web Search","Database","Email"],exampleTasks:["Analyze data","Write content","Support customers"],bestFor:"Business teams",tone:"professional"});}
+    setLoading(false);
+  }
+
+  function saveAgent(){
+    if(!agent)return;
+    setSaved(p=>[...p,{...agent,id:Date.now(),uses:0}]);
+    alert("Agent saved!");
+  }
+
+  const s={fontSize:"13px",color:"#6b7280"};
+
+  return(
+    <div style={{display:"flex",height:"100vh",overflow:"hidden",position:"relative"}}>
+      {/* Orbs */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
+        <div style={{position:"absolute",top:"15%",left:"20%",width:"500px",height:"500px",background:"radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 70%)",borderRadius:"50%",animation:"orb 18s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",bottom:"20%",right:"15%",width:"400px",height:"400px",background:"radial-gradient(circle,rgba(168,85,247,0.06) 0%,transparent 70%)",borderRadius:"50%",animation:"orb 24s ease-in-out infinite reverse"}}/>
+      </div>
+
+      {/* Sidebar */}
+      <div style={{width:sidebar?"220px":"60px",minWidth:sidebar?"220px":"60px",background:"rgba(6,10,22,0.95)",backdropFilter:"blur(24px)",borderRight:"1px solid rgba(99,102,241,0.1)",display:"flex",flexDirection:"column",transition:"all 0.3s",position:"relative",zIndex:10}}>
+        <div style={{padding:"20px 16px",borderBottom:"1px solid rgba(99,102,241,0.08)",display:"flex",alignItems:"center",gap:"12px"}}>
+          <div onClick={()=>setSidebar(p=>!p)} style={{width:"36px",height:"36px",borderRadius:"10px",flexShrink:0,background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"15px",fontWeight:800,cursor:"pointer",boxShadow:"0 4px 16px rgba(99,102,241,0.4)"}}>B</div>
+          {sidebar&&<div><div style={{fontSize:"13px",fontWeight:800,letterSpacing:"1.5px"}} className="shimmer-text">BUILD AGENT</div><div style={{fontSize:"9px",color:"#374151",letterSpacing:"2px",marginTop:"1px"}}>AI PLATFORM</div></div>}
+        </div>
+        <nav style={{flex:1,padding:"12px 8px",overflowY:"auto"}}>
+          {NAV.map(item=>(
+            <div key={item.id} className={`nav-item${nav===item.id?" active":""}`} onClick={()=>setNav(item.id)}
+              style={{display:"flex",alignItems:"center",gap:"12px",padding:"11px 10px",borderRadius:"10px",marginBottom:"2px",color:"#4b5563",fontSize:"13px",fontWeight:500,borderLeft:"2px solid transparent"}}>
+              <span style={{fontSize:"16px",flexShrink:0}}>{item.icon}</span>
+              {sidebar&&<span>{item.label}</span>}
+            </div>
+          ))}
+        </nav>
+        {sidebar&&(
+          <div style={{padding:"12px"}}>
+            <div onClick={()=>setNav("billing")} style={{background:"linear-gradient(135deg,rgba(245,200,66,0.08),rgba(245,200,66,0.04))",border:"1px solid rgba(245,200,66,0.2)",borderRadius:"12px",padding:"12px",cursor:"pointer"}}>
+              <div style={{fontSize:"8px",color:"#d4a017",letterSpacing:"2px",marginBottom:"4px",textTransform:"uppercase",fontWeight:600}}>CURRENT PLAN</div>
+              <div style={{fontSize:"14px",fontWeight:700}}>Pro ⭐</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main */}
+      <div style={{flex:1,overflowY:"auto",padding:"32px",position:"relative",zIndex:1}}>
+
+        {/* OVERVIEW */}
+        {nav==="overview"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"28px"}}>
+              <div style={{fontSize:"11px",color:"#4b5563",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"6px"}}>⬡ DASHBOARD</div>
+              <h1 style={{fontSize:"26px",fontWeight:800,letterSpacing:"-0.5px"}} className="shimmer-text">Welcome back! 👋</h1>
+              <p style={s}>Your AI Agent platform is ready</p>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:"16px",marginBottom:"28px"}}>
+              {[{label:"Total Agents",value:saved.length,icon:"◈",color:"#818cf8"},{label:"Agent Uses",value:"159",icon:"⚡",color:"#34d399"},{label:"This Month",value:"12",icon:"📊",color:"#c084fc"},{label:"Plan",value:"Pro",icon:"⭐",color:"#f5c842"}].map(s=>(
+                <div key={s.label} className="card">
+                  <div style={{fontSize:"9px",color:s.color,letterSpacing:"2px",textTransform:"uppercase",marginBottom:"12px",fontWeight:600}}>▸ {s.label}</div>
+                  <div style={{fontSize:"28px",fontWeight:800,color:s.color}}>{s.icon} {s.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{marginBottom:"20px"}}>
+              <div style={{fontSize:"10px",color:"#818cf8",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"16px",fontWeight:600}}>▸ QUICK BUILD</div>
+              <p style={{...s,marginBottom:"16px"}}>Describe your agent and let AI build it instantly</p>
+              <button className="btn-primary" onClick={()=>setNav("generator")}>⚡ START BUILDING →</button>
+            </div>
+            <div className="card">
+              <div style={{fontSize:"10px",color:"#818cf8",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"16px",fontWeight:600}}>▸ MY AGENTS</div>
+              {saved.slice(0,3).map(a=>(
+                <div key={a.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"12px",background:"rgba(3,5,13,0.5)",borderRadius:"10px",marginBottom:"8px",border:"1px solid rgba(99,102,241,0.08)"}}>
+                  <div style={{fontSize:"24px"}}>{a.avatar}</div>
+                  <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px"}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div></div>
+                  <div style={{fontSize:"10px",color:"#4b5563"}}>{a.uses} uses</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* BUILD AGENT */}
+        {nav==="generator"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"700px"}}>
+            <div style={{marginBottom:"26px"}}>
+              <h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>⚡ Build Agent</h2>
+              <p style={s}>Describe your agent in plain English</p>
+            </div>
+            <div className="card" style={{marginBottom:"20px"}}>
+              <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="e.g. A customer support agent for my SaaS product that handles refunds, answers FAQs, and escalates complex issues..." style={{width:"100%",minHeight:"120px",padding:"14px",resize:"vertical",fontSize:"14px",lineHeight:"1.6"}}/>
+              <button className="btn-primary" onClick={buildAgent} disabled={loading||!prompt.trim()} style={{marginTop:"14px",opacity:loading||!prompt.trim()?0.5:1}}>
+                {loading?"🔄 GENERATING...":"⚡ GENERATE AGENT"}
+              </button>
+            </div>
+            {agent&&(
+              <div className="card" style={{border:"1px solid rgba(99,102,241,0.25)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}>
+                  <div style={{fontSize:"48px"}}>{agent.avatar}</div>
+                  <div>
+                    <h3 style={{fontSize:"20px",fontWeight:800}}>{agent.agentName}</h3>
+                    <p style={{...s,fontSize:"12px"}}>{agent.tagline}</p>
+                    <span style={{fontSize:"9px",background:"rgba(99,102,241,0.15)",color:"#818cf8",padding:"3px 10px",borderRadius:"20px",fontWeight:600,letterSpacing:"1px"}}>{agent.tone?.toUpperCase()}</span>
+                  </div>
+                </div>
+                <div style={{marginBottom:"16px"}}>
+                  <div style={{fontSize:"9px",color:"#818cf8",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"10px",fontWeight:600}}>▸ CAPABILITIES</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                    {agent.capabilities?.map((c,i)=><span key={i} className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#a5b4fc",border:"1px solid rgba(99,102,241,0.2)"}}>{c}</span>)}
+                  </div>
+                </div>
+                <div style={{marginBottom:"16px"}}>
+                  <div style={{fontSize:"9px",color:"#818cf8",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"10px",fontWeight:600}}>▸ SYSTEM PROMPT</div>
+                  <div style={{background:"rgba(3,5,13,0.7)",borderRadius:"10px",padding:"14px",fontSize:"12px",color:"#9ca3af",lineHeight:"1.7",fontFamily:"'JetBrains Mono',monospace"}}>{agent.systemPrompt}</div>
+                </div>
+                <div style={{display:"flex",gap:"10px"}}>
+                  <button className="btn-primary" onClick={saveAgent}>💾 SAVE AGENT</button>
+                  <button className="btn-secondary" onClick={()=>{navigator.clipboard?.writeText(JSON.stringify(agent,null,2));alert("Copied!");}}>📋 COPY JSON</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MY AGENTS */}
+        {nav==="agents"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>◈ My Agents</h2><p style={s}>{saved.length} agents created</p></div>
+              <button className="btn-primary" onClick={()=>setNav("generator")}>+ NEW AGENT</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
+              {saved.map(a=>(
+                <div key={a.id} className="card" style={{cursor:"pointer",transition:"border-color 0.2s"}} onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(99,102,241,0.3)"} onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(99,102,241,0.1)"}>
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"14px"}}>
+                    <div style={{fontSize:"32px"}}>{a.avatar}</div>
+                    <div><div style={{fontWeight:700,fontSize:"14px"}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div></div>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{a.tone||"professional"}</span>
+                    <span style={{fontSize:"11px",color:"#4b5563"}}>{a.uses} uses</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TEMPLATES */}
+        {nav==="templates"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>📋 Templates</h2><p style={s}>Ready-made agent templates</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
+              {TEMPLATES.map(t=>(
+                <div key={t.id} className="card">
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"14px"}}>
+                    <div style={{fontSize:"28px"}}>{t.avatar}</div>
+                    <div><div style={{fontWeight:700}}>{t.name}</div><span className="tag" style={{background:`${t.color}18`,color:t.color,border:`1px solid ${t.color}30`}}>{t.category}</span></div>
+                  </div>
+                  <p style={{...s,fontSize:"12px",marginBottom:"14px"}}>{t.description}</p>
+                  <button onClick={()=>{setPrompt(t.description);setNav("generator");}} style={{width:"100%",padding:"10px",background:`${t.color}18`,border:`1px solid ${t.color}35`,borderRadius:"9px",color:t.color,fontSize:"11px",fontWeight:700,cursor:"pointer",fontFamily:"'Sora',sans-serif",letterSpacing:"1px"}}>⚡ USE TEMPLATE</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MARKETPLACE */}
+        {nav==="marketplace"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🛒 Marketplace</h2><p style={s}>Buy & sell AI agents</p></div>
+            <input value={mktSearch} onChange={e=>setMktSearch(e.target.value)} placeholder="Search agents..." style={{width:"100%",padding:"12px 16px",marginBottom:"20px",fontSize:"13px"}}/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
+              {MARKETPLACE.filter(a=>a.agentName.toLowerCase().includes(mktSearch.toLowerCase())).map(a=>(
+                <div key={a.id} className="card">
+                  {a.featured&&<div style={{fontSize:"9px",color:"#f5c842",letterSpacing:"2px",marginBottom:"10px",fontWeight:600}}>⭐ FEATURED</div>}
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                    <div style={{fontSize:"28px"}}>{a.avatar}</div>
+                    <div><div style={{fontWeight:700}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div></div>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                    <span style={{fontSize:"12px",color:"#f5c842"}}>⭐ {a.rating} ({a.reviews})</span>
+                    <span style={{fontWeight:800,color:"#34d399",fontSize:"16px"}}>${a.price}<span style={{fontSize:"10px",color:"#6b7280"}}>/mo</span></span>
+                  </div>
+                  <button className="btn-primary" style={{width:"100%"}}>🛒 BUY NOW</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ANALYTICS */}
+        {nav==="analytics"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>📊 Analytics</h2><p style={s}>Track your agent performance</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:"16px",marginBottom:"20px"}}>
+              {[{label:"Total Uses",value:"159",change:"+12%",color:"#818cf8"},{label:"Avg Response",value:"1.2s",change:"-8%",color:"#34d399"},{label:"Satisfaction",value:"94%",change:"+3%",color:"#c084fc"},{label:"Revenue",value:"$0",change:"Upgrade",color:"#f5c842"}].map(m=>(
+                <div key={m.label} className="card">
+                  <div style={{fontSize:"9px",color:m.color,letterSpacing:"2px",textTransform:"uppercase",marginBottom:"10px",fontWeight:600}}>▸ {m.label}</div>
+                  <div style={{fontSize:"26px",fontWeight:800,color:m.color,marginBottom:"6px"}}>{m.value}</div>
+                  <div style={{fontSize:"11px",color:"#34d399"}}>{m.change}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card">
+              <div style={{fontSize:"10px",color:"#818cf8",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"16px",fontWeight:600}}>▸ AGENT USAGE</div>
+              {saved.map(a=>(
+                <div key={a.id} style={{marginBottom:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+                    <span style={{fontSize:"12px"}}>{a.avatar} {a.agentName}</span>
+                    <span style={{fontSize:"12px",color:"#6b7280"}}>{a.uses} uses</span>
+                  </div>
+                  <div style={{height:"6px",background:"rgba(99,102,241,0.1)",borderRadius:"3px"}}>
+                    <div style={{height:"100%",width:`${Math.min((a.uses/100)*100,100)}%`,background:"linear-gradient(90deg,#6366f1,#a855f7)",borderRadius:"3px"}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TEAM */}
+        {nav==="team"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>👥 Team</h2><p style={s}>Manage your team members</p></div>
+            {[{name:"Rahul Kumar",email:"rahul@example.com",role:"Admin",avatar:"R",color:"#6366f1",status:"online"},{name:"Ayesha Shah",email:"ayesha@company.com",role:"Editor",avatar:"A",color:"#a855f7",status:"online"},{name:"James Wilson",email:"james@company.com",role:"Viewer",avatar:"J",color:"#34d399",status:"away"},{name:"Sara Ahmed",email:"sara@company.com",role:"Editor",avatar:"S",color:"#fbbf24",status:"offline"}].map(m=>(
+              <div key={m.name} className="card" style={{marginBottom:"12px",display:"flex",alignItems:"center",gap:"14px"}}>
+                <div style={{width:"40px",height:"40px",borderRadius:"50%",background:`${m.color}25`,border:`2px solid ${m.color}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px",fontWeight:700,color:m.color}}>{m.avatar}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600}}>{m.name}</div>
+                  <div style={{fontSize:"11px",color:"#6b7280"}}>{m.email}</div>
+                </div>
+                <span className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{m.role}</span>
+                <div style={{width:"8px",height:"8px",borderRadius:"50%",background:m.status==="online"?"#34d399":m.status==="away"?"#fbbf24":"#4b5563"}}/>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* BILLING */}
+        {nav==="billing"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>◎ Billing</h2><p style={s}>Choose your plan</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:"16px"}}>
+              {PLANS.map(p=>(
+                <div key={p.name} onClick={()=>setSelectedPlan(p.name)} className="card" style={{cursor:"pointer",border:`1px solid ${selectedPlan===p.name?p.color:"rgba(99,102,241,0.1)"}`,position:"relative",transition:"all 0.2s"}}>
+                  {p.popular&&<div style={{position:"absolute",top:"-10px",left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${p.color},#c084fc)`,padding:"3px 14px",borderRadius:"20px",fontSize:"9px",fontWeight:700,letterSpacing:"1px"}}>MOST POPULAR</div>}
+                  <div style={{fontSize:"10px",color:p.color,letterSpacing:"2px",textTransform:"uppercase",marginBottom:"10px",fontWeight:600}}>▸ {p.name}</div>
+                  <div style={{fontSize:"30px",fontWeight:800,color:p.color,marginBottom:"4px"}}>${p.price}<span style={{fontSize:"12px",color:"#6b7280"}}>{p.price>0?"/mo":"forever"}</span></div>
+                  <div style={{margin:"16px 0",height:"1px",background:"rgba(99,102,241,0.1)"}}/>
+                  {p.features.map((f,i)=><div key={i} style={{fontSize:"12px",color:"#9ca3af",marginBottom:"8px"}}>✓ {f}</div>)}
+                  <button className="btn-primary" style={{width:"100%",marginTop:"16px",background:selectedPlan===p.name?`linear-gradient(135deg,${p.color},#c084fc)`:"rgba(99,102,241,0.1)",border:selectedPlan===p.name?"none":`1px solid ${p.color}40`,color:selectedPlan===p.name?"#fff":p.color}}>
+                    {selectedPlan===p.name?"✓ SELECTED":"SELECT PLAN"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SETTINGS */}
+        {nav==="settings"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"560px"}}>
+            <div style={{marginBottom:"26px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>⚙ Settings</h2><p style={s}>Manage your account</p></div>
+            {[{section:"Profile",fields:[{label:"Full Name",value:"Rahul Kumar"},{label:"Email",value:"rahul@example.com"}]},{section:"API",fields:[{label:"API Key",value:"bai_••••••••••••••••"},{label:"Webhook URL",value:"https://your-site.com/webhook"}]}].map(({section,fields})=>(
+              <div key={section} className="card" style={{marginBottom:"16px"}}>
+                <div style={{fontSize:"9px",color:"#818cf8",letterSpacing:"2.5px",marginBottom:"16px",textTransform:"uppercase",fontWeight:600}}>▸ {section}</div>
+                {fields.map(({label,value})=>(
+                  <div key={label} style={{marginBottom:"14px"}}>
+                    <div style={{fontSize:"9px",color:"#4b5563",letterSpacing:"1px",marginBottom:"6px",textTransform:"uppercase",fontWeight:500}}>{label}</div>
+                    <div style={{background:"rgba(3,5,13,0.7)",border:"1px solid rgba(99,102,241,0.1)",borderRadius:"9px",padding:"10px 14px",fontSize:"12px",color:"#6b7280",fontFamily:"'JetBrains Mono',monospace"}}>{value}</div>
+                  </div>
+                ))}
+                <button className="btn-secondary">SAVE CHANGES</button>
+              </div>
+            ))}
+            <div style={{background:"rgba(239,68,68,0.04)",border:"1px solid rgba(239,68,68,0.13)",borderRadius:"14px",padding:"20px"}}>
+              <div style={{fontSize:"9px",color:"#f87171",letterSpacing:"2px",marginBottom:"12px",textTransform:"uppercase",fontWeight:600}}>▸ Danger Zone</div>
+              <button style={{padding:"9px 20px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:"9px",color:"#f87171",fontSize:"10px",fontFamily:"'Sora',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"1px"}}>DELETE ACCOUNT</button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
