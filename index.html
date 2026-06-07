@@ -782,8 +782,8 @@ function App(){
                   <div style={{fontSize:"28px",fontWeight:800,color:p.color,marginBottom:"4px"}}>${p.price}<span style={{fontSize:"11px",color:"#6b7280"}}>{p.price>0?"/mo":" free"}</span></div>
                   <div style={{margin:"14px 0",height:"1px",background:"rgba(99,102,241,0.08)"}}/>
                   {p.features.map((f,i)=><div key={i} style={{fontSize:"12px",color:"#9ca3af",marginBottom:"8px"}}>✓ {f}</div>)}
-                  <button className="btn" onClick={e=>{e.stopPropagation();setPlan(p.name);showToast(`✅ ${p.name} plan selected!`);}} style={{width:"100%",marginTop:"14px",background:plan===p.name?`linear-gradient(135deg,${p.color},#c084fc)`:"rgba(99,102,241,0.08)",border:plan===p.name?"none":`1px solid ${p.color}40`,color:plan===p.name?"#fff":p.color}}>
-                    {plan===p.name?"✓ CURRENT PLAN":"SELECT PLAN"}
+                  <button className="btn" onClick={e=>{e.stopPropagation();setPlan(p.name);if(p.name==="Pro"){window.open("https://buildagentpro.lemonsqueezy.com/checkout/buy/2f17a61d-613b-4e51-8d7f-52e5f4849593","_blank");}else if(p.name==="Business"){window.open("https://buildagentpro.lemonsqueezy.com/checkout/buy/3f906435-3444-44fc-90a4-e18299fcd9e8","_blank");}else{showToast("✅ Free plan selected!");}}} style={{width:"100%",marginTop:"14px",background:plan===p.name?`linear-gradient(135deg,${p.color},#c084fc)`:"rgba(99,102,241,0.08)",border:plan===p.name?"none":`1px solid ${p.color}40`,color:plan===p.name?"#fff":p.color}}>
+                    {p.name==="Free"?"✓ GET FREE":"💳 BUY NOW →"}
                   </button>
                 </div>
               ))}
