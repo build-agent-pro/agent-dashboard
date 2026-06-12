@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Build Agent Pro – AI Agent Builder Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#03050d;color:#e8eaf2;font-family:'Sora',sans-serif;overflow:hidden}
+@keyframes orb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.05)}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes chainRun{0%{width:0%}100%{width:100%}}
+.shimmer-text{background:linear-gradient(90deg,#818cf8,#c084fc,#818cf8);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:10px;margin-bottom:2px;cursor:pointer;color:#4b5563;font-size:13px;font-weight:500;border-left:2px solid transparent;transition:all 0.2s}
+.nav-item:hover{background:rgba(99,102,241,0.08);color:#a5b4fc}
+.nav-item.active{background:rgba(99,102,241,0.12);color:#818cf8;border-left-color:#6366f1}
+.card{background:rgba(10,16,32,0.85);backdrop-filter:blur(20px);border:1px solid rgba(99,102,241,0.1);border-radius:14px;padding:22px;animation:fadeIn 0.3s ease}
+.btn{background:linear-gradient(135deg,#6366f1,#a855f7);border:none;color:#fff;border-radius:10px;padding:12px 24px;font-family:'Sora',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all 0.2s}
+.btn:hover{opacity:0.9;transform:translateY(-1px)}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.btn2{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);color:#818cf8;border-radius:10px;padding:10px 20px;font-family:'Sora',sans-serif;font-weight:600;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all 0.2s}
+.btn2:hover{background:rgba(99,102,241,0.18)}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.5px}
+textarea,input,select{background:rgba(3,5,13,0.8);border:1px solid rgba(99,102,241,0.15);border-radius:10px;color:#e8eaf2;font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;padding:12px}
+textarea:focus,input:focus,select:focus{border-color:rgba(99,102,241,0.4)}
+select option{background:#0a1020}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:2px}
+.toggle{width:40px;height:22px;border-radius:11px;cursor:pointer;transition:all 0.3s;position:relative;flex-shrink:0}
+.toggle-dot{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;transition:left 0.3s}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+const NAV=[
+  {id:"overview",icon:"⬡",label:"Overview"},
+  {id:"generator",icon:"⚡",label:"Build Agent"},
+  {id:"agents",icon:"◈",label:"My Agents"},
+  {id:"templates",icon:"📋",label:"Templates"},
+  {id:"chaining",icon:"🔀",label:"Agent Chaining"},
+  {id:"voice",icon:"🎙️",label:"Voice Agent"},
+  {id:"memory",icon:"🧠",label:"Memory System"},
+  {id:"analytics",icon:"📊",label:"Analytics"},
+  {id:"creator",icon:"🎨",label:"Content Creator"},
+  {id:"marketplace",icon:"🛒",label:"Marketplace"},
+  {id:"integrations",icon:"🔗",label:"Integrations"},
+  {id:"language",icon:"🌐",label:"Languages"},
+  {id:"team",icon:"👥",label:"Team"},
+  {id:"billing",icon:"◎",label:"Billing"},
+  {id:"affiliate",icon:"🤝",label:"Affiliate"},
+  {id:"settings",icon:"⚙",label:"Settings"},
+];
+
+const MOCK_AGENTS=[
+  {id:1,agentName:"SupportBot Pro",avatar:"🎧",tagline:"24/7 customer support specialist",tone:"friendly",uses:47,createdAt:"2 days ago"},
+  {id:2,agentName:"CodeReviewer X",avatar:"🔍",tagline:"Senior code review & debugging assistant",tone:"technical",uses:23,createdAt:"5 days ago"},
+  {id:3,agentName:"ContentCraft AI",avatar:"✍️",tagline:"Social media & blog content creator",tone:"casual",uses:89,createdAt:"1 week ago"},
+];
+
+const AGENT_TEMPLATES=[
+  {id:"t1",name:"HR Bot",avatar:"👥",category:"HR",description:"Screen resumes, schedule interviews, answer policy questions",tags:["Recruiting","Onboarding","Policy"],color:"#818cf8",prompt:"An HR assistant that screens resumes, schedules interviews, and answers HR policy questions"},
+  {id:"t2",name:"Sales Bot",avatar:"💼",category:"Sales",description:"Lead qualification, follow-ups, CRM updates, objection handling",tags:["Leads","CRM","Outreach"],color:"#34d399",prompt:"A sales assistant that qualifies leads, handles objections, and manages follow-up outreach"},
+  {id:"t3",name:"Legal Assistant",avatar:"⚖️",category:"Legal",description:"Contract review, clause analysis, legal document drafting",tags:["Contracts","Compliance","Drafting"],color:"#fbbf24",prompt:"A legal assistant that reviews contracts, analyzes clauses, and helps draft legal documents"},
+  {id:"t4",name:"SEO Writer",avatar:"🔮",category:"Content",description:"Keyword research, SEO-optimized articles, meta descriptions",tags:["Keywords","Articles","Meta"],color:"#c084fc",prompt:"An SEO writer that researches keywords, writes optimized articles, and creates meta descriptions"},
+  {id:"t5",name:"Customer Support",avatar:"🎧",category:"Support",description:"24/7 ticket handling, FAQ responses, escalation routing",tags:["Tickets","FAQ","Escalation"],color:"#60a5fa",prompt:"A customer support agent that handles tickets, answers FAQs, and routes complex issues"},
+  {id:"t6",name:"Finance Advisor",avatar:"💹",category:"Finance",description:"Budget analysis, expense tracking, financial report summaries",tags:["Budget","Reports","Tracking"],color:"#f472b6",prompt:"A finance advisor that analyzes budgets, tracks expenses, and summarizes financial reports"},
+  {id:"t7",name:"Code Reviewer",avatar:"🔍",category:"Dev",description:"PR reviews, bug detection, code quality suggestions",tags:["Code Review","Bugs","Quality"],color:"#a78bfa",prompt:"A senior code reviewer that reviews pull requests, detects bugs, and suggests improvements"},
+  {id:"t8",name:"Email Marketer",avatar:"📧",category:"Marketing",description:"Campaign copy, subject lines, A/B test variants",tags:["Campaigns","Copywriting","A/B"],color:"#fb923c",prompt:"An email marketing assistant that writes campaign copy, subject lines, and A/B test variants"},
+];
+
+const MARKETPLACE_AGENTS=[
+  {id:101,agentName:"SupportBot Pro",avatar:"🎧",tagline:"24/7 customer support specialist",category:"Support",price:9,rating:4.8,reviews:312,seller:"TechFlow Studio",downloads:1420,featured:true},
+  {id:102,agentName:"SEO Wizard",avatar:"🔮",tagline:"Boost rankings with AI-driven SEO strategy",category:"Marketing",price:14,rating:4.9,reviews:189,seller:"GrowthLab",downloads:890,featured:true},
+  {id:103,agentName:"CodeReviewer X",avatar:"🔍",tagline:"Senior-level code review & debugging",category:"Development",price:19,rating:4.7,reviews:97,seller:"DevForge",downloads:540},
+  {id:104,agentName:"ContentCraft AI",avatar:"✍️",tagline:"Social media & blog content at scale",category:"Content",price:12,rating:4.6,reviews:445,seller:"CreativeAI",downloads:2100,featured:true},
+  {id:105,agentName:"HR Recruit Agent",avatar:"👥",tagline:"Screen resumes & schedule interviews",category:"HR",price:22,rating:4.5,reviews:63,seller:"HireBot Inc",downloads:310},
+  {id:106,agentName:"Finance Advisor",avatar:"💹",tagline:"Budget tracking & financial insights",category:"Finance",price:17,rating:4.8,reviews:128,seller:"FinTech AI",downloads:670},
+  {id:107,agentName:"Legal Eagle",avatar:"⚖️",tagline:"Contract review & legal document assistant",category:"Legal",price:29,rating:4.9,reviews:44,seller:"LexAI",downloads:220},
+  {id:108,agentName:"FitCoach Pro",avatar:"💪",tagline:"Personal fitness plans & nutrition guide",category:"Health",price:8,rating:4.4,reviews:267,seller:"WellBot",downloads:1850},
+];
+
+const PLANS=[
+  {name:"Free",price:0,color:"#94a3b8",features:["3 agents/month","Basic templates","JSON export","Email support"]},
+  {name:"Pro",price:19,color:"#818cf8",features:["Unlimited agents","All templates","JSON + API export","Priority support","Advanced AI model"],popular:true},
+  {name:"Business",price:49,color:"#c084fc",features:["Everything in Pro","5 team seats","Custom branding","Dedicated support","API access","Analytics dashboard"]},
+];
+
+const LANGUAGES=[
+  {code:"en",name:"English",flag:"🇺🇸"},
+  {code:"ur",name:"Urdu",flag:"🇵🇰"},
+  {code:"hi",name:"Hindi",flag:"🇮🇳"},
+  {code:"ar",name:"Arabic",flag:"🇸🇦"},
+  {code:"zh",name:"Chinese",flag:"🇨🇳"},
+  {code:"es",name:"Spanish",flag:"🇪🇸"},
+  {code:"fr",name:"French",flag:"🇫🇷"},
+  {code:"de",name:"German",flag:"🇩🇪"},
+  {code:"pt",name:"Portuguese",flag:"🇧🇷"},
+  {code:"ru",name:"Russian",flag:"🇷🇺"},
+  {code:"ja",name:"Japanese",flag:"🇯🇵"},
+  {code:"ko",name:"Korean",flag:"🇰🇷"},
+  {code:"tr",name:"Turkish",flag:"🇹🇷"},
+  {code:"id",name:"Indonesian",flag:"🇮🇩"},
+  {code:"bn",name:"Bengali",flag:"🇧🇩"},
+];
+
+const INTEGRATIONS=[
+  {id:"slack",name:"Slack",icon:"💬",category:"Communication",desc:"Send agent outputs to Slack channels",connected:true},
+  {id:"notion",name:"Notion",icon:"📝",category:"Productivity",desc:"Save agent outputs to Notion pages"},
+  {id:"zapier",name:"Zapier",icon:"⚡",category:"Automation",desc:"Connect agents to 5000+ apps"},
+  {id:"hubspot",name:"HubSpot",icon:"🔶",category:"CRM",desc:"Sync agent data with HubSpot CRM"},
+  {id:"gmail",name:"Gmail",icon:"📧",category:"Email",desc:"Send emails via agent workflows"},
+  {id:"sheets",name:"Google Sheets",icon:"📊",category:"Data",desc:"Export agent data to spreadsheets"},
+  {id:"stripe",name:"Stripe",icon:"💳",category:"Payments",desc:"Process payments through agents"},
+  {id:"openai",name:"OpenAI",icon:"🤖",category:"AI",desc:"Connect to GPT-4 and DALL-E"},
+  {id:"discord",name:"Discord",icon:"🎮",category:"Communication",desc:"Deploy agents in Discord servers"},
+  {id:"twitter",name:"Twitter/X",icon:"🐦",category:"Social",desc:"Post and monitor Twitter via agents"},
+  {id:"shopify",name:"Shopify",icon:"🛍️",category:"Ecommerce",desc:"Connect agents to your Shopify store"},
+  {id:"airtable",name:"Airtable",icon:"🗃️",category:"Database",desc:"Read and write Airtable records"},
+];
+
+const SYSTEM_PROMPT=`You are an expert AI Agent Builder. Return ONLY valid JSON (no markdown, no code blocks):
+{"agentName":"Name","tagline":"tagline","role":"role","personality":"personality","systemPrompt":"150 word system prompt","capabilities":["c1","c2","c3","c4","c5"],"tools":["t1","t2","t3"],"exampleTasks":["task1","task2","task3"],"bestFor":"audience","tone":"professional","avatar":"emoji"}`;
+
+function App(){
+  const [nav,setNav]=useState("overview");
+  const [prompt,setPrompt]=useState("");
+  const [agent,setAgent]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [saved,setSaved]=useState(MOCK_AGENTS);
+  const [sidebar,setSidebar]=useState(true);
+  const [plan,setPlan]=useState("Pro");
+  const [mktSearch,setMktSearch]=useState("");
+  const [mktCat,setMktCat]=useState("All");
+  const [purchased,setPurchased]=useState([]);
+  const [connectedApps,setConnectedApps]=useState(["slack"]);
+  const [integSearch,setIntegSearch]=useState("");
+  const [uiLang,setUiLang]=useState("en");
+  const [agentLangs,setAgentLangs]=useState(["en"]);
+  const [chainSteps,setChainSteps]=useState([
+    {id:1,agent:"ContentCraft AI",avatar:"✍️",output:"Blog Draft",trigger:"On Complete"},
+    {id:2,agent:"SEO Wizard",avatar:"🔮",output:"SEO Report",trigger:"Auto"},
+  ]);
+  const [chainRunning,setChainRunning]=useState(false);
+  const [chainProgress,setChainProgress]=useState(0);
+  const [voiceInput,setVoiceInput]=useState("");
+  const [voiceChat,setVoiceChat]=useState([]);
+  const [voiceLoading,setVoiceLoading]=useState(false);
+  const [selectedVoice,setSelectedVoice]=useState("SupportBot Pro");
+  const [memories,setMemories]=useState([
+    {id:1,agent:"SupportBot Pro",avatar:"🎧",key:"User prefers email over phone",type:"preference",time:"2h ago",active:true},
+    {id:2,agent:"ContentCraft AI",avatar:"✍️",key:"Brand tone: casual, Gen-Z friendly",type:"context",time:"1d ago",active:true},
+    {id:3,agent:"CodeReviewer X",avatar:"🔍",key:"Preferred language: TypeScript",type:"preference",time:"3d ago",active:false},
+  ]);
+  const [creatorPrompt,setCreatorPrompt]=useState("");
+  const [creatorOutput,setCreatorOutput]=useState("");
+  const [creatorLoading,setCreatorLoading]=useState(false);
+  const [creatorType,setCreatorType]=useState("LinkedIn Post");
+  const [teamMembers,setTeamMembers]=useState([
+    {id:1,name:"Rahul Kumar",email:"rahul@example.com",role:"Admin",avatar:"R",color:"#6366f1",status:"online",agents:8,lastActive:"Now"},
+    {id:2,name:"Ayesha Shah",email:"ayesha@company.com",role:"Editor",avatar:"A",color:"#a855f7",status:"online",agents:4,lastActive:"2m ago"},
+    {id:3,name:"James Wilson",email:"james@company.com",role:"Viewer",avatar:"J",color:"#34d399",status:"away",agents:1,lastActive:"1h ago"},
+    {id:4,name:"Sara Ahmed",email:"sara@company.com",role:"Editor",avatar:"S",color:"#fbbf24",status:"offline",agents:3,lastActive:"Yesterday"},
+  ]);
+  const [inviteEmail,setInviteEmail]=useState("");
+  const [teamTab,setTeamTab]=useState("members");
+  const [translateInput,setTranslateInput]=useState("");
+  const [translateOutput,setTranslateOutput]=useState("");
+  const [translateLoading,setTranslateLoading]=useState(false);
+  const [translateTo,setTranslateTo]=useState("ur");
+  const [testingBot,setTestingBot]=useState(null);
+  const [testMsg,setTestMsg]=useState("");
+  const [testChat,setTestChat]=useState([]);
+  const [testLoading,setTestLoading]=useState(false);
+  const [toast,setToast]=useState("");
+
+  const g={fontSize:"13px",color:"#6b7280"};
+  const label={fontSize:"9px",letterSpacing:"2px",textTransform:"uppercase",fontWeight:600,marginBottom:"10px"};
+
+  function showToast(msg){setToast(msg);setTimeout(()=>setToast(""),2500);}
+
+  async function callClaude(systemMsg, userMsg){
+    const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:systemMsg,message:userMsg})});
+    const d=await r.json();
+    return d.content?.[0]?.text||"";
+  }
+
+  async function buildAgent(){
+    if(!prompt.trim())return;
+    setLoading(true);setAgent(null);
+    try{
+      const t=(await callClaude(SYSTEM_PROMPT,"Build: "+prompt)).replace(/```json|```/g,"").trim();
+      setAgent(JSON.parse(t));
+    }catch(e){
+      setAgent({agentName:"Demo Agent",avatar:"🤖",tagline:"AI-powered assistant",role:"Helps with various tasks",personality:"Professional and helpful",systemPrompt:"You are a helpful AI assistant that assists users with their queries professionally and efficiently. You provide clear, concise answers and always aim to resolve issues quickly.",capabilities:["Task automation","Data analysis","Content creation","Customer support","Report generation"],tools:["Web Search","Database","Email"],exampleTasks:["Analyze data","Write content","Support customers"],bestFor:"Business teams",tone:"professional"});
+    }
+    setLoading(false);
+  }
+
+  function saveAgent(){
+    if(!agent)return;
+    setSaved(p=>[...p,{...agent,id:Date.now(),uses:0,createdAt:"Just now"}]);
+    showToast("✅ Agent saved!");
+  }
+
+  async function runChain(){
+    setChainRunning(true);setChainProgress(0);
+    for(let i=0;i<=100;i+=2){await new Promise(r=>setTimeout(r,60));setChainProgress(i);}
+    setChainRunning(false);showToast("✅ Chain completed!");
+  }
+
+  async function sendVoice(){
+    if(!voiceInput.trim())return;
+    const msg=voiceInput;setVoiceInput("");
+    setVoiceChat(p=>[...p,{role:"user",text:msg}]);
+    setVoiceLoading(true);
+    try{
+      const reply=await callClaude(`You are ${selectedVoice}. Respond briefly and helpfully.`,msg);
+      setVoiceChat(p=>[...p,{role:"agent",text:reply||"I can help you with that!"}]);
+    }catch(e){setVoiceChat(p=>[...p,{role:"agent",text:"Hello! I'm here to help you."}]);}
+    setVoiceLoading(false);
+  }
+
+  async function generateContent(){
+    if(!creatorPrompt.trim())return;
+    setCreatorLoading(true);setCreatorOutput("");
+    try{
+      const text=await callClaude(`You are a professional content creator.`,`Create a ${creatorType} about: ${creatorPrompt}. Make it engaging and professional.`);
+      setCreatorOutput(text||"Content generated!");
+    }catch(e){setCreatorOutput(`🎨 Sample ${creatorType}:\n\nHere is your professionally crafted content about "${creatorPrompt}". This would be generated by our AI system in the full version.`);}
+    setCreatorLoading(false);
+  }
+
+  async function translateText(){
+    if(!translateInput.trim())return;
+    setTranslateLoading(true);
+    try{
+      const text=await callClaude("You are a translator. Return ONLY the translation, nothing else.",`Translate this to ${LANGUAGES.find(l=>l.code===translateTo)?.name||translateTo}:\n${translateInput}`);
+      setTranslateOutput(text||"Translation ready!");
+    }catch(e){setTranslateOutput("Translation would appear here in the live version.");}
+    setTranslateLoading(false);
+  }
+
+  async function testAgent(bot,msg){
+    if(!msg.trim())return;
+    setTestChat(p=>[...p,{role:"user",text:msg}]);
+    setTestMsg("");setTestLoading(true);
+    try{
+      const text=await callClaude(`You are ${bot.agentName}. ${bot.systemPrompt||"Be helpful."}`,msg);
+      setTestChat(p=>[...p,{role:"agent",text:text||"I'm here to help!"}]);
+    }catch(e){setTestChat(p=>[...p,{role:"agent",text:"Hello! I'm ready to assist you."}]);}
+    setTestLoading(false);
+  }
+
+  const cats=["All",...new Set(MARKETPLACE_AGENTS.map(a=>a.category))];
+  const filteredMarket=MARKETPLACE_AGENTS.filter(a=>(mktCat==="All"||a.category===mktCat)&&a.agentName.toLowerCase().includes(mktSearch.toLowerCase()));
+
+  return(
+    <div style={{display:"flex",height:"100vh",overflow:"hidden",position:"relative"}}>
+      {/* Toast */}
+      {toast&&<div style={{position:"fixed",top:"20px",right:"20px",background:"rgba(99,102,241,0.95)",color:"#fff",padding:"12px 20px",borderRadius:"12px",zIndex:9999,fontSize:"13px",fontWeight:600,boxShadow:"0 8px 32px rgba(99,102,241,0.4)",animation:"fadeIn 0.3s ease"}}>{toast}</div>}
+
+      {/* BG Orbs */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0}}>
+        <div style={{position:"absolute",top:"15%",left:"20%",width:"500px",height:"500px",background:"radial-gradient(circle,rgba(99,102,241,0.07) 0%,transparent 70%)",borderRadius:"50%",animation:"orb 18s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",bottom:"20%",right:"15%",width:"400px",height:"400px",background:"radial-gradient(circle,rgba(168,85,247,0.06) 0%,transparent 70%)",borderRadius:"50%",animation:"orb 24s ease-in-out infinite reverse"}}/>
+      </div>
+
+      {/* Sidebar */}
+      <div style={{width:sidebar?"230px":"60px",minWidth:sidebar?"230px":"60px",background:"rgba(6,10,22,0.97)",backdropFilter:"blur(24px)",borderRight:"1px solid rgba(99,102,241,0.1)",display:"flex",flexDirection:"column",transition:"all 0.3s",position:"relative",zIndex:10}}>
+        <div style={{padding:"18px 14px",borderBottom:"1px solid rgba(99,102,241,0.08)",display:"flex",alignItems:"center",gap:"12px"}}>
+          <div onClick={()=>setSidebar(p=>!p)} style={{width:"36px",height:"36px",borderRadius:"10px",flexShrink:0,background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"15px",fontWeight:800,cursor:"pointer",boxShadow:"0 4px 16px rgba(99,102,241,0.4)"}}>B</div>
+          {sidebar&&<div><div className="shimmer-text" style={{fontSize:"13px",fontWeight:800,letterSpacing:"1.5px"}}>BUILD AGENT</div><div style={{fontSize:"9px",color:"#374151",letterSpacing:"2px",marginTop:"1px"}}>AI PLATFORM</div></div>}
+        </div>
+        <nav style={{flex:1,padding:"10px 8px",overflowY:"auto"}}>
+          {NAV.map(item=>(
+            <div key={item.id} className={`nav-item${nav===item.id?" active":""}`} onClick={()=>{setNav(item.id);if(item.id!==nav){setTestingBot(null);setTestChat([]);}}}>
+              <span style={{fontSize:"15px",flexShrink:0}}>{item.icon}</span>
+              {sidebar&&<span style={{fontSize:"12px"}}>{item.label}</span>}
+            </div>
+          ))}
+        </nav>
+        {sidebar&&(
+          <div style={{padding:"12px"}}>
+            <div onClick={()=>setNav("billing")} style={{background:"rgba(245,200,66,0.08)",border:"1px solid rgba(245,200,66,0.2)",borderRadius:"12px",padding:"12px",cursor:"pointer"}}>
+              <div style={{fontSize:"8px",color:"#d4a017",letterSpacing:"2px",marginBottom:"4px",textTransform:"uppercase",fontWeight:600}}>CURRENT PLAN</div>
+              <div style={{fontSize:"14px",fontWeight:700}}>Pro ⭐</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main */}
+      <div style={{flex:1,overflowY:"auto",padding:"30px",position:"relative",zIndex:1}}>
+
+        {/* OVERVIEW */}
+        {nav==="overview"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"26px"}}>
+              <div style={{...label,color:"#4b5563"}}>⬡ DASHBOARD</div>
+              <h1 className="shimmer-text" style={{fontSize:"26px",fontWeight:800}}>Welcome back! 👋</h1>
+              <p style={g}>Your AI Agent platform is ready</p>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"14px",marginBottom:"24px"}}>
+              {[{label:"Total Agents",value:saved.length,icon:"◈",color:"#818cf8"},{label:"Agent Uses",value:"159",icon:"⚡",color:"#34d399"},{label:"This Month",value:"12",icon:"📊",color:"#c084fc"},{label:"Plan",value:"Pro",icon:"⭐",color:"#f5c842"}].map(s=>(
+                <div key={s.label} className="card">
+                  <div style={{...label,color:s.color}}>▸ {s.label}</div>
+                  <div style={{fontSize:"26px",fontWeight:800,color:s.color}}>{s.icon} {s.value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px",marginBottom:"16px"}}>
+              <div className="card">
+                <div style={{...label,color:"#818cf8"}}>▸ QUICK BUILD</div>
+                <p style={{...g,marginBottom:"14px",fontSize:"12px"}}>Describe your agent and let AI build it instantly</p>
+                <button className="btn" onClick={()=>setNav("generator")}>⚡ START BUILDING →</button>
+              </div>
+              <div className="card">
+                <div style={{...label,color:"#34d399"}}>▸ MARKETPLACE</div>
+                <p style={{...g,marginBottom:"14px",fontSize:"12px"}}>{MARKETPLACE_AGENTS.length} agents available to buy</p>
+                <button className="btn" onClick={()=>setNav("marketplace")} style={{background:"linear-gradient(135deg,#059669,#34d399)"}}>🛒 BROWSE →</button>
+              </div>
+            </div>
+            <div className="card">
+              <div style={{...label,color:"#818cf8"}}>▸ RECENT AGENTS</div>
+              {saved.slice(0,3).map(a=>(
+                <div key={a.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px",background:"rgba(3,5,13,0.5)",borderRadius:"10px",marginBottom:"8px",border:"1px solid rgba(99,102,241,0.08)"}}>
+                  <div style={{fontSize:"22px"}}>{a.avatar}</div>
+                  <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px"}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div></div>
+                  <div style={{fontSize:"10px",color:"#4b5563"}}>{a.uses} uses</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* BUILD AGENT */}
+        {nav==="generator"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"700px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>⚡ Build Agent</h2><p style={g}>Describe your agent in plain English</p></div>
+            <div className="card" style={{marginBottom:"18px"}}>
+              <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="e.g. A customer support agent for my SaaS product that handles refunds, answers FAQs, and escalates complex issues to human agents..." style={{width:"100%",minHeight:"110px",resize:"vertical",lineHeight:"1.6"}}/>
+              <div style={{display:"flex",gap:"10px",marginTop:"14px",flexWrap:"wrap"}}>
+                {["Customer Support Bot","Sales Lead Qualifier","Content Writer","Code Reviewer"].map(ex=>(
+                  <button key={ex} className="btn2" onClick={()=>setPrompt(ex)} style={{fontSize:"10px",padding:"6px 12px"}}>{ex}</button>
+                ))}
+              </div>
+              <button className="btn" onClick={buildAgent} disabled={loading||!prompt.trim()} style={{marginTop:"14px"}}>{loading?"🔄 GENERATING...":"⚡ GENERATE AGENT"}</button>
+            </div>
+            {agent&&(
+              <div className="card" style={{border:"1px solid rgba(99,102,241,0.3)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"16px",marginBottom:"20px"}}>
+                  <div style={{fontSize:"48px"}}>{agent.avatar}</div>
+                  <div><h3 style={{fontSize:"20px",fontWeight:800}}>{agent.agentName}</h3><p style={{...g,fontSize:"12px",marginBottom:"6px"}}>{agent.tagline}</p><span className="tag" style={{background:"rgba(99,102,241,0.15)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{agent.tone?.toUpperCase()}</span></div>
+                </div>
+                <div style={{marginBottom:"14px"}}><div style={{...label,color:"#818cf8"}}>▸ CAPABILITIES</div><div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>{agent.capabilities?.map((c,i)=><span key={i} className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#a5b4fc",border:"1px solid rgba(99,102,241,0.2)"}}>{c}</span>)}</div></div>
+                <div style={{marginBottom:"14px"}}><div style={{...label,color:"#34d399"}}>▸ TOOLS</div><div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>{agent.tools?.map((t,i)=><span key={i} className="tag" style={{background:"rgba(52,211,153,0.1)",color:"#34d399",border:"1px solid rgba(52,211,153,0.2)"}}>{t}</span>)}</div></div>
+                <div style={{marginBottom:"16px"}}><div style={{...label,color:"#c084fc"}}>▸ SYSTEM PROMPT</div><div style={{background:"rgba(3,5,13,0.7)",borderRadius:"10px",padding:"14px",fontSize:"12px",color:"#9ca3af",lineHeight:"1.7",fontFamily:"'JetBrains Mono',monospace"}}>{agent.systemPrompt}</div></div>
+                <div style={{marginBottom:"16px"}}><div style={{...label,color:"#f5c842"}}>▸ EXAMPLE TASKS</div>{agent.exampleTasks?.map((t,i)=><div key={i} style={{fontSize:"12px",color:"#9ca3af",marginBottom:"4px"}}>• {t}</div>)}</div>
+                <div style={{fontSize:"11px",color:"#6b7280",marginBottom:"16px"}}>Best for: {agent.bestFor}</div>
+                <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
+                  <button className="btn" onClick={saveAgent}>💾 SAVE AGENT</button>
+                  <button className="btn2" onClick={()=>{navigator.clipboard?.writeText(JSON.stringify(agent,null,2));showToast("📋 Copied to clipboard!");}}>📋 COPY JSON</button>
+                  <button className="btn2" onClick={()=>{setPrompt("");setAgent(null);}}>🔄 RESET</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MY AGENTS */}
+        {nav==="agents"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"12px"}}>
+              <div><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>◈ My Agents</h2><p style={g}>{saved.length} agents created</p></div>
+              <button className="btn" onClick={()=>setNav("generator")}>+ NEW AGENT</button>
+            </div>
+            {testingBot?(
+              <div className="card">
+                <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"18px"}}>
+                  <div style={{fontSize:"28px"}}>{testingBot.avatar}</div>
+                  <div style={{flex:1}}><div style={{fontWeight:700}}>{testingBot.agentName}</div><div style={g}>Live Test Chat</div></div>
+                  <button className="btn2" onClick={()=>{setTestingBot(null);setTestChat([]);}}>✕ Close</button>
+                </div>
+                <div style={{height:"260px",overflowY:"auto",marginBottom:"14px",display:"flex",flexDirection:"column",gap:"10px"}}>
+                  {testChat.length===0&&<div style={{...g,textAlign:"center",marginTop:"80px"}}>Send a message to test the agent!</div>}
+                  {testChat.map((m,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                      <div style={{maxWidth:"75%",padding:"10px 14px",borderRadius:"12px",fontSize:"13px",lineHeight:"1.5",background:m.role==="user"?"linear-gradient(135deg,#6366f1,#a855f7)":"rgba(255,255,255,0.05)",border:m.role==="agent"?"1px solid rgba(99,102,241,0.15)":"none"}}>{m.text}</div>
+                    </div>
+                  ))}
+                  {testLoading&&<div style={{...g,fontSize:"12px",animation:"pulse 1s infinite"}}>Agent is typing...</div>}
+                </div>
+                <div style={{display:"flex",gap:"10px"}}>
+                  <input value={testMsg} onChange={e=>setTestMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&testAgent(testingBot,testMsg)} placeholder="Type a message..." style={{flex:1}}/>
+                  <button className="btn" onClick={()=>testAgent(testingBot,testMsg)}>SEND</button>
+                </div>
+              </div>
+            ):(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:"14px"}}>
+                {saved.map(a=>(
+                  <div key={a.id} className="card">
+                    <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"14px"}}>
+                      <div style={{fontSize:"32px"}}>{a.avatar}</div>
+                      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:"14px"}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div></div>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                      <span className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{a.tone||"professional"}</span>
+                      <span style={{fontSize:"11px",color:"#4b5563"}}>{a.uses} uses</span>
+                    </div>
+                    <div style={{display:"flex",gap:"8px"}}>
+                      <button className="btn" onClick={()=>{setTestingBot(a);setTestChat([]);}} style={{flex:1,padding:"8px",fontSize:"11px"}}>🧪 TEST</button>
+                      <button className="btn2" onClick={()=>{navigator.clipboard?.writeText(JSON.stringify(a,null,2));showToast("📋 Copied!");}} style={{padding:"8px 12px",fontSize:"11px"}}>📋</button>
+                      <button className="btn2" onClick={()=>{setSaved(p=>p.filter(x=>x.id!==a.id));showToast("🗑️ Deleted!");}} style={{padding:"8px 12px",fontSize:"11px",color:"#f87171",borderColor:"rgba(248,113,113,0.2)"}}>🗑️</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TEMPLATES */}
+        {nav==="templates"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>📋 Templates</h2><p style={g}>Ready-made agent templates — click to use</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:"14px"}}>
+              {AGENT_TEMPLATES.map(t=>(
+                <div key={t.id} className="card">
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                    <div style={{fontSize:"28px"}}>{t.avatar}</div>
+                    <div><div style={{fontWeight:700}}>{t.name}</div><span className="tag" style={{background:`${t.color}18`,color:t.color,border:`1px solid ${t.color}30`}}>{t.category}</span></div>
+                  </div>
+                  <p style={{...g,fontSize:"12px",marginBottom:"12px"}}>{t.description}</p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:"4px",marginBottom:"14px"}}>
+                    {t.tags.map((tag,i)=><span key={i} className="tag" style={{background:"rgba(255,255,255,0.04)",color:"#6b7280",border:"1px solid rgba(255,255,255,0.06)"}}>{tag}</span>)}
+                  </div>
+                  <button onClick={()=>{setPrompt(t.prompt);setNav("generator");}} style={{width:"100%",padding:"10px",background:`${t.color}18`,border:`1px solid ${t.color}35`,borderRadius:"9px",color:t.color,fontSize:"11px",fontWeight:700,cursor:"pointer",fontFamily:"'Sora',sans-serif",letterSpacing:"1px"}}>⚡ USE TEMPLATE →</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* AGENT CHAINING */}
+        {nav==="chaining"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"700px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🔀 Agent Chaining</h2><p style={g}>Connect multiple agents in a workflow pipeline</p></div>
+            <div className="card" style={{marginBottom:"16px"}}>
+              <div style={{...label,color:"#818cf8"}}>▸ PIPELINE</div>
+              {chainSteps.map((step,i)=>(
+                <div key={step.id}>
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",padding:"14px",background:"rgba(3,5,13,0.5)",borderRadius:"12px",border:"1px solid rgba(99,102,241,0.12)"}}>
+                    <div style={{width:"28px",height:"28px",borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"12px",fontWeight:700,flexShrink:0}}>{i+1}</div>
+                    <div style={{fontSize:"22px"}}>{step.avatar}</div>
+                    <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"13px"}}>{step.agent}</div><div style={{fontSize:"11px",color:"#6b7280"}}>Output: {step.output}</div></div>
+                    <span className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{step.trigger}</span>
+                    <button onClick={()=>setChainSteps(p=>p.filter(s=>s.id!==step.id))} style={{background:"transparent",border:"none",color:"#f87171",cursor:"pointer",fontSize:"16px"}}>✕</button>
+                  </div>
+                  {i<chainSteps.length-1&&<div style={{display:"flex",justifyContent:"center",margin:"8px 0"}}><div style={{width:"2px",height:"24px",background:"linear-gradient(180deg,#6366f1,#a855f7)",borderRadius:"1px"}}/></div>}
+                </div>
+              ))}
+              <button className="btn2" onClick={()=>setChainSteps(p=>[...p,{id:Date.now(),agent:"New Agent",avatar:"🤖",output:"Output",trigger:"Auto"}])} style={{width:"100%",marginTop:"14px"}}>+ ADD STEP</button>
+            </div>
+            {chainRunning&&(
+              <div className="card" style={{marginBottom:"16px"}}>
+                <div style={{...label,color:"#34d399"}}>▸ RUNNING — {chainProgress}%</div>
+                <div style={{height:"8px",background:"rgba(99,102,241,0.1)",borderRadius:"4px"}}>
+                  <div style={{height:"100%",width:`${chainProgress}%`,background:"linear-gradient(90deg,#6366f1,#a855f7)",borderRadius:"4px",transition:"width 0.1s"}}/>
+                </div>
+              </div>
+            )}
+            <button className="btn" onClick={runChain} disabled={chainRunning||chainSteps.length===0}>{chainRunning?"⏳ RUNNING...":"▶ RUN CHAIN"}</button>
+          </div>
+        )}
+
+        {/* VOICE AGENT */}
+        {nav==="voice"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"680px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🎙️ Voice Agent</h2><p style={g}>Chat with your agents in real-time</p></div>
+            <div className="card" style={{marginBottom:"16px"}}>
+              <div style={{...label,color:"#818cf8"}}>▸ SELECT AGENT</div>
+              <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
+                {saved.map(a=>(
+                  <button key={a.id} onClick={()=>setSelectedVoice(a.agentName)} style={{padding:"10px 16px",borderRadius:"10px",border:`1px solid ${selectedVoice===a.agentName?"#818cf8":"rgba(99,102,241,0.15)"}`,background:selectedVoice===a.agentName?"rgba(99,102,241,0.15)":"transparent",color:selectedVoice===a.agentName?"#818cf8":"#6b7280",cursor:"pointer",fontSize:"12px",fontFamily:"'Sora',sans-serif",fontWeight:600}}>
+                    {a.avatar} {a.agentName}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="card">
+              <div style={{height:"300px",overflowY:"auto",marginBottom:"16px",display:"flex",flexDirection:"column",gap:"10px"}}>
+                {voiceChat.length===0&&<div style={{...g,textAlign:"center",marginTop:"100px",fontSize:"12px"}}>🎙️ Start talking to {selectedVoice}!</div>}
+                {voiceChat.map((m,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                    <div style={{maxWidth:"75%",padding:"10px 14px",borderRadius:"12px",fontSize:"13px",lineHeight:"1.5",background:m.role==="user"?"linear-gradient(135deg,#6366f1,#a855f7)":"rgba(255,255,255,0.05)",border:m.role==="agent"?"1px solid rgba(99,102,241,0.15)":"none"}}>{m.text}</div>
+                  </div>
+                ))}
+                {voiceLoading&&<div style={{...g,fontSize:"12px",animation:"pulse 1s infinite"}}>🎙️ Agent responding...</div>}
+              </div>
+              <div style={{display:"flex",gap:"10px"}}>
+                <input value={voiceInput} onChange={e=>setVoiceInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendVoice()} placeholder={`Message ${selectedVoice}...`} style={{flex:1}}/>
+                <button className="btn" onClick={sendVoice}>SEND</button>
+                <button className="btn2" onClick={()=>setVoiceChat([])}>🔄</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MEMORY SYSTEM */}
+        {nav==="memory"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"12px"}}>
+              <div><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🧠 Memory System</h2><p style={g}>{memories.filter(m=>m.active).length} active memories across {saved.length} agents</p></div>
+              <button className="btn2" onClick={()=>setMemories([])}>🗑️ CLEAR ALL</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"14px"}}>
+              {memories.map(m=>(
+                <div key={m.id} className="card" style={{opacity:m.active?1:0.5}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
+                    <div style={{fontSize:"20px"}}>{m.avatar}</div>
+                    <div style={{flex:1}}><div style={{fontWeight:600,fontSize:"12px"}}>{m.agent}</div><div style={{fontSize:"10px",color:"#6b7280"}}>{m.time}</div></div>
+                    <span className="tag" style={{background:m.type==="preference"?"rgba(99,102,241,0.1)":"rgba(52,211,153,0.1)",color:m.type==="preference"?"#818cf8":"#34d399",border:`1px solid ${m.type==="preference"?"rgba(99,102,241,0.2)":"rgba(52,211,153,0.2)"}`}}>{m.type}</span>
+                  </div>
+                  <div style={{background:"rgba(3,5,13,0.6)",borderRadius:"8px",padding:"10px",fontSize:"12px",color:"#9ca3af",fontFamily:"'JetBrains Mono',monospace",marginBottom:"12px"}}>{m.key}</div>
+                  <div style={{display:"flex",gap:"8px"}}>
+                    <button onClick={()=>setMemories(p=>p.map(x=>x.id===m.id?{...x,active:!x.active}:x))} className="btn2" style={{flex:1,fontSize:"10px",padding:"7px"}}>{m.active?"⏸ DISABLE":"▶ ENABLE"}</button>
+                    <button onClick={()=>setMemories(p=>p.filter(x=>x.id!==m.id))} className="btn2" style={{padding:"7px 12px",fontSize:"10px",color:"#f87171",borderColor:"rgba(248,113,113,0.2)"}}>🗑️</button>
+                  </div>
+                </div>
+              ))}
+              <div className="card" style={{border:"1px dashed rgba(99,102,241,0.2)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"140px",cursor:"pointer"}} onClick={()=>setMemories(p=>[...p,{id:Date.now(),agent:"SupportBot Pro",avatar:"🎧",key:"New memory entry",type:"context",time:"Just now",active:true}])}>
+                <div style={{fontSize:"28px",marginBottom:"8px"}}>+</div>
+                <div style={{fontSize:"12px",color:"#6b7280"}}>Add Memory</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ANALYTICS */}
+        {nav==="analytics"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>📊 Analytics</h2><p style={g}>Track your agent performance</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"14px",marginBottom:"20px"}}>
+              {[{label:"Total Uses",value:"159",change:"+12%",color:"#818cf8"},{label:"Avg Response",value:"1.2s",change:"-8%",color:"#34d399"},{label:"Satisfaction",value:"94%",change:"+3%",color:"#c084fc"},{label:"Revenue",value:"$0",change:"Upgrade",color:"#f5c842"}].map(m=>(
+                <div key={m.label} className="card">
+                  <div style={{...label,color:m.color}}>▸ {m.label}</div>
+                  <div style={{fontSize:"24px",fontWeight:800,color:m.color,marginBottom:"6px"}}>{m.value}</div>
+                  <div style={{fontSize:"11px",color:"#34d399"}}>{m.change}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
+              <div className="card">
+                <div style={{...label,color:"#818cf8"}}>▸ AGENT USAGE</div>
+                {saved.map(a=>(
+                  <div key={a.id} style={{marginBottom:"14px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:"6px"}}>
+                      <span style={{fontSize:"12px"}}>{a.avatar} {a.agentName}</span>
+                      <span style={{fontSize:"12px",color:"#6b7280"}}>{a.uses} uses</span>
+                    </div>
+                    <div style={{height:"6px",background:"rgba(99,102,241,0.08)",borderRadius:"3px"}}>
+                      <div style={{height:"100%",width:`${Math.min((a.uses/100)*100,100)}%`,background:"linear-gradient(90deg,#6366f1,#a855f7)",borderRadius:"3px"}}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div style={{...label,color:"#34d399"}}>▸ WEEKLY ACTIVITY</div>
+                <div style={{display:"flex",alignItems:"flex-end",gap:"8px",height:"100px",marginTop:"10px"}}>
+                  {[40,65,30,80,55,90,70].map((h,i)=>(
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"6px"}}>
+                      <div style={{width:"100%",height:`${h}%`,background:"linear-gradient(180deg,#6366f1,#a855f7)",borderRadius:"4px 4px 0 0",opacity:0.7}}/>
+                      <div style={{fontSize:"9px",color:"#4b5563"}}>{"SMTWTFS"[i]}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTENT CREATOR */}
+        {nav==="creator"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"700px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🎨 Content Creator</h2><p style={g}>Generate AI-powered content for any platform</p></div>
+            <div className="card" style={{marginBottom:"16px"}}>
+              <div style={{...label,color:"#818cf8"}}>▸ CONTENT TYPE</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"8px",marginBottom:"16px"}}>
+                {["LinkedIn Post","Twitter Thread","Blog Post","Email Campaign","Product Description","YouTube Script"].map(type=>(
+                  <button key={type} onClick={()=>setCreatorType(type)} style={{padding:"8px 14px",borderRadius:"8px",border:`1px solid ${creatorType===type?"#818cf8":"rgba(99,102,241,0.15)"}`,background:creatorType===type?"rgba(99,102,241,0.15)":"transparent",color:creatorType===type?"#818cf8":"#6b7280",cursor:"pointer",fontSize:"11px",fontFamily:"'Sora',sans-serif",fontWeight:600}}>{type}</button>
+                ))}
+              </div>
+              <textarea value={creatorPrompt} onChange={e=>setCreatorPrompt(e.target.value)} placeholder={`What is your ${creatorType} about?`} style={{width:"100%",minHeight:"90px",resize:"vertical",marginBottom:"14px"}}/>
+              <button className="btn" onClick={generateContent} disabled={creatorLoading||!creatorPrompt.trim()}>{creatorLoading?"🔄 GENERATING...":"🎨 GENERATE CONTENT"}</button>
+            </div>
+            {creatorOutput&&(
+              <div className="card">
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                  <div style={{...label,color:"#34d399",marginBottom:0}}>▸ GENERATED {creatorType.toUpperCase()}</div>
+                  <button className="btn2" onClick={()=>{navigator.clipboard?.writeText(creatorOutput);showToast("📋 Copied!");}}>📋 COPY</button>
+                </div>
+                <div style={{background:"rgba(3,5,13,0.7)",borderRadius:"10px",padding:"16px",fontSize:"13px",color:"#d1d5db",lineHeight:"1.7",whiteSpace:"pre-wrap"}}>{creatorOutput}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MARKETPLACE */}
+        {nav==="marketplace"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🛒 Marketplace</h2><p style={g}>Buy & sell AI agents — {MARKETPLACE_AGENTS.length} agents available</p></div>
+            <div style={{display:"flex",gap:"10px",marginBottom:"18px",flexWrap:"wrap"}}>
+              <input value={mktSearch} onChange={e=>setMktSearch(e.target.value)} placeholder="Search agents..." style={{flex:1,minWidth:"200px"}}/>
+              <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                {cats.map(cat=>(
+                  <button key={cat} onClick={()=>setMktCat(cat)} style={{padding:"8px 14px",borderRadius:"8px",border:`1px solid ${mktCat===cat?"#818cf8":"rgba(99,102,241,0.15)"}`,background:mktCat===cat?"rgba(99,102,241,0.15)":"transparent",color:mktCat===cat?"#818cf8":"#6b7280",cursor:"pointer",fontSize:"11px",fontFamily:"'Sora',sans-serif",fontWeight:600}}>{cat}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:"14px"}}>
+              {filteredMarket.map(a=>(
+                <div key={a.id} className="card">
+                  {a.featured&&<div style={{fontSize:"9px",color:"#f5c842",letterSpacing:"2px",marginBottom:"10px",fontWeight:600}}>⭐ FEATURED</div>}
+                  <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                    <div style={{fontSize:"28px"}}>{a.avatar}</div>
+                    <div><div style={{fontWeight:700}}>{a.agentName}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{a.tagline}</div><div style={{fontSize:"10px",color:"#4b5563",marginTop:"2px"}}>by {a.seller}</div></div>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div><span style={{fontSize:"12px",color:"#f5c842"}}>⭐ {a.rating}</span><span style={{fontSize:"11px",color:"#4b5563",marginLeft:"6px"}}>({a.reviews} reviews)</span></div>
+                    <span style={{fontWeight:800,color:"#34d399",fontSize:"16px"}}>${a.price}<span style={{fontSize:"10px",color:"#6b7280"}}>/mo</span></span>
+                  </div>
+                  <div style={{fontSize:"11px",color:"#4b5563",marginBottom:"12px"}}>⬇ {a.downloads.toLocaleString()} downloads</div>
+                  <button className="btn" onClick={()=>{setPurchased(p=>[...p,a.id]);showToast(`✅ ${a.agentName} purchased!`);}} style={{width:"100%",background:purchased.includes(a.id)?"rgba(52,211,153,0.2)":"linear-gradient(135deg,#6366f1,#a855f7)",border:purchased.includes(a.id)?"1px solid rgba(52,211,153,0.4)":"none",color:purchased.includes(a.id)?"#34d399":"#fff"}}>
+                    {purchased.includes(a.id)?"✅ PURCHASED":"🛒 BUY NOW"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* INTEGRATIONS */}
+        {nav==="integrations"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🔗 Integrations</h2><p style={g}>{connectedApps.length} connected — {INTEGRATIONS.length} available</p></div>
+            <input value={integSearch} onChange={e=>setIntegSearch(e.target.value)} placeholder="Search integrations..." style={{width:"100%",marginBottom:"18px"}}/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:"14px"}}>
+              {INTEGRATIONS.filter(i=>i.name.toLowerCase().includes(integSearch.toLowerCase())).map(integ=>{
+                const connected=connectedApps.includes(integ.id);
+                return(
+                  <div key={integ.id} className="card">
+                    <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                      <div style={{fontSize:"28px"}}>{integ.icon}</div>
+                      <div style={{flex:1}}><div style={{fontWeight:700}}>{integ.name}</div><span className="tag" style={{background:"rgba(255,255,255,0.04)",color:"#6b7280",border:"1px solid rgba(255,255,255,0.06)"}}>{integ.category}</span></div>
+                      <div style={{width:"8px",height:"8px",borderRadius:"50%",background:connected?"#34d399":"#374151",flexShrink:0}}/>
+                    </div>
+                    <p style={{...g,fontSize:"12px",marginBottom:"14px"}}>{integ.desc}</p>
+                    <button onClick={()=>{setConnectedApps(p=>connected?p.filter(x=>x!==integ.id):[...p,integ.id]);showToast(connected?`🔌 ${integ.name} disconnected`:`✅ ${integ.name} connected!`);}} className={connected?"btn2":"btn"} style={{width:"100%",fontSize:"11px"}}>
+                      {connected?"🔌 DISCONNECT":"🔗 CONNECT"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* LANGUAGES */}
+        {nav==="language"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🌐 Languages</h2><p style={g}>Multi-language support for your agents</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px",marginBottom:"18px"}}>
+              <div className="card">
+                <div style={{...label,color:"#818cf8"}}>▸ UI LANGUAGE</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
+                  {LANGUAGES.slice(0,8).map(lang=>(
+                    <button key={lang.code} onClick={()=>setUiLang(lang.code)} style={{padding:"8px 12px",borderRadius:"8px",border:`1px solid ${uiLang===lang.code?"#818cf8":"rgba(99,102,241,0.15)"}`,background:uiLang===lang.code?"rgba(99,102,241,0.15)":"transparent",color:uiLang===lang.code?"#818cf8":"#6b7280",cursor:"pointer",fontSize:"12px",fontFamily:"'Sora',sans-serif"}}>
+                      {lang.flag} {lang.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="card">
+                <div style={{...label,color:"#34d399"}}>▸ AGENT LANGUAGES</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
+                  {LANGUAGES.map(lang=>(
+                    <button key={lang.code} onClick={()=>setAgentLangs(p=>p.includes(lang.code)?p.filter(x=>x!==lang.code):[...p,lang.code])} style={{padding:"6px 10px",borderRadius:"8px",border:`1px solid ${agentLangs.includes(lang.code)?"#34d399":"rgba(99,102,241,0.15)"}`,background:agentLangs.includes(lang.code)?"rgba(52,211,153,0.1)":"transparent",color:agentLangs.includes(lang.code)?"#34d399":"#6b7280",cursor:"pointer",fontSize:"11px",fontFamily:"'Sora',sans-serif"}}>
+                      {lang.flag} {lang.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="card">
+              <div style={{...label,color:"#c084fc"}}>▸ LIVE TRANSLATION</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:"12px",alignItems:"start"}}>
+                <textarea value={translateInput} onChange={e=>setTranslateInput(e.target.value)} placeholder="Enter text to translate..." style={{width:"100%",minHeight:"100px",resize:"vertical"}}/>
+                <div style={{display:"flex",flexDirection:"column",gap:"10px",alignItems:"center",paddingTop:"10px"}}>
+                  <select value={translateTo} onChange={e=>setTranslateTo(e.target.value)} style={{padding:"8px"}}>
+                    {LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.flag} {l.name}</option>)}
+                  </select>
+                  <button className="btn" onClick={translateText} disabled={translateLoading||!translateInput.trim()} style={{padding:"10px 16px",fontSize:"11px"}}>{translateLoading?"...":"→ TRANSLATE"}</button>
+                </div>
+                <div style={{background:"rgba(3,5,13,0.7)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:"10px",padding:"12px",minHeight:"100px",fontSize:"13px",color:"#9ca3af",lineHeight:"1.6"}}>{translateOutput||"Translation appears here..."}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TEAM */}
+        {nav==="team"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>👥 Team</h2><p style={g}>Manage your team members and permissions</p></div>
+            <div style={{display:"flex",gap:"10px",marginBottom:"20px"}}>
+              {["members","invite","activity"].map(tab=>(
+                <button key={tab} onClick={()=>setTeamTab(tab)} style={{padding:"9px 18px",borderRadius:"9px",border:`1px solid ${teamTab===tab?"#818cf8":"rgba(99,102,241,0.15)"}`,background:teamTab===tab?"rgba(99,102,241,0.15)":"transparent",color:teamTab===tab?"#818cf8":"#6b7280",cursor:"pointer",fontSize:"12px",fontFamily:"'Sora',sans-serif",fontWeight:600,textTransform:"capitalize"}}>{tab}</button>
+              ))}
+            </div>
+            {teamTab==="members"&&(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"14px"}}>
+                {teamMembers.map(m=>(
+                  <div key={m.id} className="card">
+                    <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"14px"}}>
+                      <div style={{width:"40px",height:"40px",borderRadius:"50%",background:`${m.color}25`,border:`2px solid ${m.color}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"16px",fontWeight:700,color:m.color,flexShrink:0}}>{m.avatar}</div>
+                      <div style={{flex:1}}><div style={{fontWeight:600}}>{m.name}</div><div style={{fontSize:"11px",color:"#6b7280"}}>{m.email}</div></div>
+                      <div style={{width:"8px",height:"8px",borderRadius:"50%",background:m.status==="online"?"#34d399":m.status==="away"?"#fbbf24":"#4b5563",flexShrink:0}}/>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span className="tag" style={{background:"rgba(99,102,241,0.1)",color:"#818cf8",border:"1px solid rgba(99,102,241,0.2)"}}>{m.role}</span>
+                      <span style={{fontSize:"11px",color:"#4b5563"}}>{m.agents} agents · {m.lastActive}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {teamTab==="invite"&&(
+              <div className="card" style={{maxWidth:"500px"}}>
+                <div style={{...label,color:"#818cf8"}}>▸ INVITE MEMBER</div>
+                <input value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="Email address" style={{width:"100%",marginBottom:"12px"}}/>
+                <select style={{width:"100%",marginBottom:"16px"}}>
+                  <option>Viewer</option><option>Editor</option><option>Admin</option>
+                </select>
+                <button className="btn" onClick={()=>{if(inviteEmail){showToast("✅ Invite sent!");setInviteEmail("");}}} disabled={!inviteEmail.trim()}>📧 SEND INVITE</button>
+              </div>
+            )}
+            {teamTab==="activity"&&(
+              <div className="card">
+                <div style={{...label,color:"#818cf8"}}>▸ RECENT ACTIVITY</div>
+                {[{user:"Ayesha",action:"created agent",target:"Sales Outreach Bot",time:"5m ago",icon:"⚡"},{user:"James",action:"viewed agent",target:"SupportBot Pro",time:"22m ago",icon:"👁"},{user:"Sara",action:"exported agent",target:"ContentCraft AI",time:"1h ago",icon:"⬇"},{user:"Ayesha",action:"bought from marketplace",target:"SEO Wizard",time:"2h ago",icon:"🛒"},{user:"Rahul",action:"upgraded plan",target:"Pro Plan",time:"1d ago",icon:"⭐"}].map((a,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:"12px",padding:"12px",background:"rgba(3,5,13,0.4)",borderRadius:"10px",marginBottom:"8px",border:"1px solid rgba(99,102,241,0.06)"}}>
+                    <div style={{fontSize:"18px"}}>{a.icon}</div>
+                    <div style={{flex:1}}><span style={{fontWeight:600,fontSize:"13px"}}>{a.user}</span><span style={{fontSize:"13px",color:"#6b7280"}}> {a.action} </span><span style={{fontSize:"13px",color:"#818cf8"}}>{a.target}</span></div>
+                    <div style={{fontSize:"11px",color:"#4b5563"}}>{a.time}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* BILLING */}
+        {nav==="billing"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>◎ Billing</h2><p style={g}>Choose the right plan for your needs</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))",gap:"14px",marginBottom:"24px"}}>
+              {PLANS.map(p=>(
+                <div key={p.name} onClick={()=>setPlan(p.name)} className="card" style={{cursor:"pointer",border:`1px solid ${plan===p.name?p.color:"rgba(99,102,241,0.1)"}`,position:"relative",transition:"all 0.2s"}}>
+                  {p.popular&&<div style={{position:"absolute",top:"-11px",left:"50%",transform:"translateX(-50%)",background:`linear-gradient(135deg,${p.color},#c084fc)`,padding:"3px 16px",borderRadius:"20px",fontSize:"9px",fontWeight:700,letterSpacing:"1px",whiteSpace:"nowrap"}}>MOST POPULAR</div>}
+                  <div style={{...label,color:p.color}}>▸ {p.name}</div>
+                  <div style={{fontSize:"28px",fontWeight:800,color:p.color,marginBottom:"4px"}}>${p.price}<span style={{fontSize:"11px",color:"#6b7280"}}>{p.price>0?"/mo":" free"}</span></div>
+                  <div style={{margin:"14px 0",height:"1px",background:"rgba(99,102,241,0.08)"}}/>
+                  {p.features.map((f,i)=><div key={i} style={{fontSize:"12px",color:"#9ca3af",marginBottom:"8px"}}>✓ {f}</div>)}
+                  <button className="btn" onClick={e=>{e.stopPropagation();setPlan(p.name);if(p.name==="Pro"){window.open("https://buildagentpro.lemonsqueezy.com/checkout/buy/2f17a61d-613b-4e51-8d7f-52e5f4849593","_blank");}else if(p.name==="Business"){window.open("https://buildagentpro.lemonsqueezy.com/checkout/buy/3f906435-3444-44fc-90a4-e18299fcd9e8","_blank");}else{showToast("✅ Free plan selected!");}}} style={{width:"100%",marginTop:"14px",background:plan===p.name?`linear-gradient(135deg,${p.color},#c084fc)`:"rgba(99,102,241,0.08)",border:plan===p.name?"none":`1px solid ${p.color}40`,color:plan===p.name?"#fff":p.color}}>
+                    {p.name==="Free"?"✓ GET FREE":"💳 BUY NOW →"}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="card">
+              <div style={{...label,color:"#f5c842"}}>▸ PAYMENT METHOD</div>
+              <div style={{display:"flex",gap:"10px",marginBottom:"16px"}}>
+                {["💳 Card","₿ Crypto","🏦 Bank"].map(m=>(
+                  <button key={m} className="btn2" style={{padding:"8px 16px",fontSize:"11px"}}>{m}</button>
+                ))}
+              </div>
+              <p style={{...g,fontSize:"12px"}}>Secure payments powered by Stripe. Cancel anytime.</p>
+            </div>
+          </div>
+        )}
+
+        {/* AFFILIATE */}
+        {nav==="affiliate"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"700px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>🤝 Affiliate Program</h2><p style={g}>Earn 30% recurring commission on every referral</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"14px",marginBottom:"20px"}}>
+              {[{label:"Referrals",value:"0",icon:"👥",color:"#818cf8"},{label:"Earnings",value:"$0",icon:"💰",color:"#34d399"},{label:"Commission",value:"30%",icon:"🎯",color:"#c084fc"}].map(s=>(
+                <div key={s.label} className="card" style={{textAlign:"center"}}>
+                  <div style={{fontSize:"28px",marginBottom:"8px"}}>{s.icon}</div>
+                  <div style={{fontSize:"22px",fontWeight:800,color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:"11px",color:"#6b7280",marginTop:"4px"}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{marginBottom:"16px"}}>
+              <div style={{...label,color:"#818cf8"}}>▸ YOUR REFERRAL LINK</div>
+              <div style={{display:"flex",gap:"10px"}}>
+                <div style={{flex:1,background:"rgba(3,5,13,0.7)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:"10px",padding:"12px",fontSize:"12px",color:"#6b7280",fontFamily:"'JetBrains Mono',monospace"}}>https://buildagent.pro/ref/YOUR_CODE</div>
+                <button className="btn" onClick={()=>showToast("📋 Link copied!")}>COPY</button>
+              </div>
+            </div>
+            <div className="card">
+              <div style={{...label,color:"#34d399"}}>▸ HOW IT WORKS</div>
+              {["Share your unique referral link","Friend signs up and upgrades to paid plan","You earn 30% recurring commission every month","Withdraw via PayPal, Stripe, or Bank Transfer"].map((step,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
+                  <div style={{width:"24px",height:"24px",borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#a855f7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:700,flexShrink:0}}>{i+1}</div>
+                  <div style={{fontSize:"13px",color:"#9ca3af"}}>{step}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SETTINGS */}
+        {nav==="settings"&&(
+          <div style={{animation:"fadeIn 0.3s ease",maxWidth:"580px"}}>
+            <div style={{marginBottom:"24px"}}><h2 style={{fontSize:"22px",fontWeight:800,marginBottom:"5px"}}>⚙ Settings</h2><p style={g}>Manage your account preferences</p></div>
+            {[{section:"Profile",fields:[{label:"Full Name",value:"Rahul Kumar",type:"text"},{label:"Email",value:"rahul@example.com",type:"email"},{label:"Company",value:"Build Agent Pro",type:"text"}]},{section:"API Keys",fields:[{label:"API Key",value:"bai_••••••••••••••••••••",type:"password"},{label:"Webhook URL",value:"https://your-site.com/webhook",type:"url"}]}].map(({section,fields})=>(
+              <div key={section} className="card" style={{marginBottom:"14px"}}>
+                <div style={{...label,color:"#818cf8"}}>▸ {section}</div>
+                {fields.map(({label:lbl,value,type})=>(
+                  <div key={lbl} style={{marginBottom:"12px"}}>
+                    <div style={{fontSize:"9px",color:"#4b5563",letterSpacing:"1px",marginBottom:"6px",textTransform:"uppercase"}}>{lbl}</div>
+                    <input defaultValue={value} type={type} style={{width:"100%"}}/>
+                  </div>
+                ))}
+                <button className="btn" onClick={()=>showToast("✅ Changes saved!")}>SAVE CHANGES</button>
+              </div>
+            ))}
+            <div className="card" style={{marginBottom:"14px"}}>
+              <div style={{...label,color:"#818cf8"}}>▸ NOTIFICATIONS</div>
+              {["Email notifications","Agent usage alerts","Weekly reports","Marketing emails"].map((item,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                  <span style={{fontSize:"13px",color:"#9ca3af"}}>{item}</span>
+                  <div className="toggle" style={{background:i<2?"#6366f1":"rgba(99,102,241,0.2)"}} onClick={e=>{const d=e.currentTarget;d.style.background=d.style.background==="#6366f1"?"rgba(99,102,241,0.2)":"#6366f1";const dot=d.firstChild;dot.style.left=dot.style.left==="2px"?"20px":"2px";}}>
+                    <div className="toggle-dot" style={{left:i<2?"20px":"2px"}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:"rgba(239,68,68,0.04)",border:"1px solid rgba(239,68,68,0.13)",borderRadius:"14px",padding:"20px"}}>
+              <div style={{fontSize:"9px",color:"#f87171",letterSpacing:"2px",marginBottom:"14px",textTransform:"uppercase",fontWeight:600}}>▸ Danger Zone</div>
+              <button style={{padding:"9px 20px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:"9px",color:"#f87171",fontSize:"10px",fontFamily:"'Sora',sans-serif",fontWeight:600,cursor:"pointer",letterSpacing:"1px"}} onClick={()=>showToast("⚠️ Please confirm in email")}>DELETE ACCOUNT</button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
